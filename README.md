@@ -1,12 +1,17 @@
-# Lem Codecomp
+# Codecomp
 
+Copilot like code suggestions using RAG. Currently only works with [Lem](https://github.com/lem-project/lem) editor.
+
+## Demo
+
+https://github.com/asutoshpalai/codecomp/assets/8471682/89621c81-2f2f-4233-9130-5c3ca80198bd
 
 ## Usage
 
 - Clone the repo
 ```
-$ git clone https://github.com/asutoshpalai/lem-codecomp
-$  cd lem-codecomp
+$ git clone https://github.com/asutoshpalai/codecomp
+$ cd codecomp
 ```
 
 - Download the embedding model
@@ -22,6 +27,10 @@ export OPENAI_BASE_URL="https://api.openai.com/v1"
 export OPENAI_API_KEY="skynet-launch-codes"
 export OPENAI_MODEL_NAME="gpt-3.5-turbo-0613"
 ```
+
+__Note:__ Strongly using [Groq](https://wow.groq.com/) becuase of how fast it is.
+Groq has an [OpenAI compatible API](https://console.groq.com/docs/openai) which
+can be used here.
 
 - Launch the Python server from the same shell. I haven't commited the dependency
 file yet. Please install anything that it complains about. Some errors might show
