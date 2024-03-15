@@ -68,8 +68,10 @@ def retriever_wrap(input: RetInput) -> Dict[str, str]:
 
 
 def retriever(repo_path: str, lang: Language, partial_code: str) -> List[str]:
-    # TODO: make the combo of repo_path and the lang as the key
     # TODO: add persistance to MAYBE reduce memory footprint?
+    if not os.path.isdir(repo_path):
+        logger.debug("received file path, converting it to dir path")
+        repo_path = os.path.dirname(repo_path)
 
     id = hex(hash(repo_path + lang))[2:]  # not designed to be secure, but to be unique
 
@@ -109,19 +111,17 @@ def format_docs(docs):
     return ret
 
 
-# llm = ChatOpenAI(model_name="mixtral-8x7b-32768") # groq model
 llm = ChatOpenAI(model_name=os.getenv("OPENAI_MODEL_NAME"))
-# llm = ChatOpenAI(model_name="mistral-7b-instruct-fp16") # octoai model
-# llm = ChatOpenAI(model_name="mistralai/Mixtral-8x7B-Instruct-v0.1") # anyscale model
-# llm = ChatOpenAI(model_name="google/gemma-7b-it:free") # openrouter model
 
 template = """You are a coding compleition engine. Your job is to help a developer code faster
 for an experimentation project on which he is working locally. When provided with some sample
 codes and the parital code, you provide a well commented code that should complete
-the partial code. Use the same language as the sample codes. Do not use a different
-language. Do not output code in Python if not explicitly requested to do so. Output
-the code between tripple backticks(```). Don't output anything that should occur before the
-given code.
+the partial code. Here are the instructions that you need to follow:
+1. Use the same language as the sample codes. Do not use a different language.
+2. Do not output code in Python if not explicitly requested to do so.
+3. Output the code between tripple backticks(```).
+4. Do not output anything that should occur before the given code.
+5. The exact last line of the parital code should be present in the output.
 
 Following are the sample codes:
 {context}

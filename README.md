@@ -1,12 +1,18 @@
 # Codecomp
 
-Copilot like code suggestions using RAG. Currently only works with [Lem](https://github.com/lem-project/lem) editor.
+Copilot like code suggestions using RAG. Currently only plugins for [Lem](https://github.com/lem-project/lem) editor and Vim (with textprop support, > 9.0.0185).
 
 ## Demo
 
+### Lem
+
 https://github.com/asutoshpalai/codecomp/assets/8471682/89621c81-2f2f-4233-9130-5c3ca80198bd
 
-## Usage
+### Vim
+
+![](assets/vim.gif)
+
+## Setup
 
 - Clone the repo
 ```
@@ -50,6 +56,25 @@ curl -X POST -v http://localhost:8000/code_complete/invoke --header 'Content-Typ
   }
 }'
 ```
+
+### Vim
+
+- Install the plugin. You can use [vim-plug](https://github.com/junegunn/vim-plug)
+to install as follows:
+
+```
+Plug 'asutoshpalai/codecomp'
+```
+
+- Add keybindings to invoke code completion
+
+```
+imap <C-a> <esc>:Codecomp<cr>i
+imap <C-e> <esc>:CodecompAccept<cr>i
+imap <C-s> <esc>:CodecompReject<cr>i
+```
+
+### Lem
 
 - Load this in your Lem's `init.lisp` file. Add the following lines to the init file.
 ```
