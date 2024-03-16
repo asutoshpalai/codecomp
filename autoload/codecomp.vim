@@ -1,4 +1,4 @@
-hi def CodecompGhosttext guifg=#808080 ctermfg=11
+hi def CodecompGhosttext guifg=#808080 ctermfg=7
 
 let s:hlgroup = 'CodecompGhosttext'
 
@@ -43,8 +43,7 @@ function! codecomp#Reject(...)
 endfunction
 
 function! codecomp#clear_suggestion(...)
-  while  prop_remove({"type": s:hlgroup}, s:suggestion_line)
-  endwhile
+  call prop_remove({'type': s:hlgroup, 'all': v:true})
 endfunction
 
 function! codecomp#read_previous()
@@ -70,11 +69,9 @@ function! codecomp#langchain_invoke(code)
   let l:json_body = substitute(l:json_body, "'", "\\'", "g")
   let l:response_file = '/tmp/http_response.txt'
   let l:cmd = 'curl -s -S -X POST -d ''' . l:json_body . ''' -H "Content-Type: application/json" -o ' . l:response_file . ' ' . l:api_url
-  echom l:cmd
   let l:output = system(l:cmd)
   let l:response = readfile(l:response_file)
   call delete(l:response_file)
-  echom l:response
   return json_decode(l:response[0])['output']
 endfunction
 
@@ -104,10 +101,15 @@ function! codecomp#show_suggestion(suggestion)
   let s:suggestion_line = l:l_num
   let l:text = split(l:text, "\n", 1)
 
- 
-  " TODO: process the line so that they don't look so horrible
   call prop_add(l:l_num, strlen(getline(l:l_num)) + 1, {'type': s:hlgroup, 'text': text[0]})
   for line in l:text[1:]
+    " since prop replaces spaces with tabs and removes empty lines
+    if line =~ '^\\s*$' || empty(line)
+      let line = ' '
+    else
+      let line = substitute(line, '\t', repeat(' ', &tabstop), 'g')
+    endif
+
     call prop_add(l:l_num, 0, {'type': s:hlgroup, 'text_align': 'below', 'text': line})
   endfor
   redraw!
