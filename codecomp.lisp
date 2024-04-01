@@ -6,9 +6,32 @@
 
 (defvar *overlay-start* nil)
 (defvar *overlay-end* nil)
+(defvar *bg-thread* nil)
 
 (define-key *global-keymap* "C-x C-i" 'llm-code-suggestion)
 (define-key *global-keymap* "C-x C-o" 'hello)
+
+(defun run-llm-code-suggestion (point)
+  (remove-overlay-text)
+  (let* ((partial-code (get-previous-code point))
+         (repo-path (namestring
+                     (lem-core/commands/project:find-root (buffer-directory))))
+         (lang (get-buffer-language (point-buffer point)))
+         (completion-text (lem-codecomp/client:code-complete repo-path
+                                                             lang
+                                                             partial-code))
+         (new-point (current-point))
+         (new-partial-code (get-previous-code new-point)))
+    ; (message (format nil "compleiton done ~a" completion-text))
+    (show-overlay-text new-point (or (trim-till-string completion-text new-partial-code) ""))))
+
+(defun bg-llm-code-suggestion (point)
+  (if (not *bg-thread*)
+      (setf *bg-thread* (bt2:make-thread (lambda ()
+                                           (unwind-protect
+                                                (run-llm-code-suggestion point)
+                                             (setf *bg-thread* nil)))
+                                         :name "codecomp-bg"))))
 
 (defun get-previous-code (end)
   "returns 20 lines starting from the current point"
@@ -51,7 +74,8 @@
     ;(setf *overlay* (make-overlay point end-point 'lem:syntax-comment-attribute))
     (setf *overlay-start* start-point)
     (setf *overlay-end* end-point)
-    (add-hook *input-hook* 'key-press-hook)))
+    (add-hook *input-hook* 'key-press-hook)
+    (redraw-display)))
 
 (defun trim-till-string (completion-text partial-code)
   ;; TODO: improve the logic so that. E.g. if the last line appears in multiple
@@ -74,16 +98,24 @@
     (delete-point *overlay-start*)
     (delete-point *overlay-end*)
     (setf *overlay-start* nil)
-    (setf *overlay-end* nil)))      
+    (setf *overlay-end* nil)))
+
+(defun self-insert-hook (c)
+  (declare (ignore c))
+  (bg-llm-code-suggestion (current-point)))
 
 (define-command llm-code-suggestion (point) ((lem:current-point))
-  (remove-overlay-text)
-  (let* ((partial-code (get-previous-code point))
-        (repo-path (namestring 
-                    (lem-core/commands/project:find-root (buffer-directory))))
-        (lang (get-buffer-language (point-buffer point)))
-        (completion-text (lem-codecomp/client:code-complete repo-path 
-                                                         lang
-                                                         partial-code)))
-    ; (message (format nil "compleiton done ~a" completion-text))
-    (show-overlay-text point (or (trim-till-string completion-text partial-code) ""))))
+  (bg-llm-code-suggestion point))
+
+(define-minor-mode codecomp-mode (:name "Codecomp"
+                                  :description "CC"
+                                  :enable-hook 'mode-enable
+                                  :disable-hook 'mode-disable))
+
+(defun mode-enable ()
+  (add-hook (variable-value 'self-insert-after-hook :buffer (current-buffer))
+            'self-insert-hook))
+
+(defun mode-disable ()
+  (remove-hook (variable-value 'self-insert-after-hook :buffer (current-buffer))
+               'self-insert-hook))

@@ -89,7 +89,7 @@ def retriever(repo_path: str, lang: Language, partial_code: str) -> List[str]:
         )
     documents = loader.load()
     splitter = RecursiveCharacterTextSplitter.from_language(
-        language=Language.GO, chunk_size=2000, chunk_overlap=200)
+        language=lang, chunk_size=2000, chunk_overlap=200)
     texts = splitter.split_documents(documents)
     db = Chroma.from_documents(texts, embedding, collection_name=id)
     ret = db.as_retriever(
